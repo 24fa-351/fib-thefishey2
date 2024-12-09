@@ -2,103 +2,108 @@
 #include <stdlib.h>
 // Patrick Hung 860865329
 
-// unsigned long long would be much bigger
-long long fib_i(int index);
-long long fib_r(int index);
+#define MAX_MEMO_SIZE 100
+
+long long compute_fibonacci_iterative(int fibonacci_index);
+long long compute_fibonacci_recursive(int fibonacci_index);
 
 // memoization arrays, 100 should be enough since 92/93 was the cap for signed
-// long long could a pair just work?
-long long memo_i[100];
-long long memo_r[100];
+// long long
+long long memoization_array_iterative[MAX_MEMO_SIZE];
+long long memoization_array_recursive[MAX_MEMO_SIZE];
 
-int main(int argc, char *argv[]) {
-  // some cleanup
-  char which;
-  long long answer;
-  int argument1;
-  int fileInt;
-  int index;
+int main(int argument_count, char *argument_values[]) {
+  char computation_method;
+  long long computed_result;
+  int start_index_argument;
+  int file_input_value;
+  int combined_index;
 
   // initialize memoization
-  for (int i = 0; i < 100; i++) {
-    memo_i[i] = -1;
-    memo_r[i] = -1;
+  for (int memo_index = 0; memo_index < MAX_MEMO_SIZE; memo_index++) {
+    memoization_array_iterative[memo_index] = -1;
+    memoization_array_recursive[memo_index] = -1;
   }
 
-  if (argc != 4) {
+  if (argument_count != 4) {
     printf("Input error");
     return 1;
   }
 
-  argument1 = atoi(argv[1]);
-  argument1 = argument1 - 1;
+  start_index_argument = atoi(argument_values[1]);
+  start_index_argument = start_index_argument - 1;
 
-  which = argv[2][0]; //[0] is for accessign character in string, 'i' / 'r'
-  char *fileName = argv[3];
+  computation_method =
+      argument_values[2]
+                     [0]; //[0] is for accessign character in string, 'i' / 'r'
+  char *file_name = argument_values[3];
 
-  FILE *file = fopen(fileName, "r");
-  if (file == NULL) {
+  FILE *input_file = fopen(file_name, "r");
+  if (input_file == NULL) {
     printf("Unable to open file\n");
     return 1;
   }
 
-  fscanf(file, "%d", &fileInt);
-  fclose(file);
+  fscanf(input_file, "%d", &file_input_value);
+  fclose(input_file);
 
-  index = argument1 + fileInt;
+  combined_index = start_index_argument + file_input_value;
 
-  if (which == 'i') {
-    answer = fib_i(index);
+  if (computation_method == 'i') {
+    computed_result = compute_fibonacci_iterative(combined_index);
   } else {
-    answer = fib_r(index);
+    computed_result = compute_fibonacci_recursive(combined_index);
   }
 
-  printf("%lld", answer);
+  printf("%lld", computed_result);
 
   return 0;
 }
 
 // iternative
-long long fib_i(int index) {
-  if (index <= 0)
+long long compute_fibonacci_iterative(int fibonacci_index) {
+  if (fibonacci_index <= 0)
     return 0;
-  if (index == 1)
+  if (fibonacci_index == 1)
     return 1;
 
-  if (memo_i[index] != -1 && index < 100)
-    return memo_i[index]; // if memo index exists (not -1 default), return memo
-                          // pair
-
-  long long a = 0;
-  long long b = 1;
-  long long temp;
-
-  for (int i = 2; i <= index; i++) {
-    temp = a + b;
-    a = b;
-    b = temp;
+  if (memoization_array_iterative[fibonacci_index] != -1 &&
+      fibonacci_index < MAX_MEMO_SIZE) {
+    return memoization_array_iterative[fibonacci_index];
   }
 
-  if (index < 100) {   // somewhat redundant bounds checking
-    memo_i[index] = b; // stroign new value in array i
+  long long previous_value = 0;
+  long long current_value = 1;
+  long long temporary_value;
+
+  for (int iteration_index = 2; iteration_index <= fibonacci_index;
+       iteration_index++) {
+    temporary_value = previous_value + current_value;
+    previous_value = current_value;
+    current_value = temporary_value;
   }
-  return b;
+
+  if (fibonacci_index < MAX_MEMO_SIZE) {
+    memoization_array_iterative[fibonacci_index] = current_value;
+  }
+  return current_value;
 }
 
 // recursive
-long long fib_r(int index) {
-  if (index <= 0)
+long long compute_fibonacci_recursive(int fibonacci_index) {
+  if (fibonacci_index <= 0)
     return 0;
-  if (index == 1)
+  if (fibonacci_index == 1)
     return 1;
 
-  if (memo_r[index] != -1 && index < 100)
-    return memo_r[index];
-  memo_r[index] =
-      fib_r(index - 1) + fib_r(index - 2); // storign new value in r array
-  return memo_r[index];
+  if (memoization_array_recursive[fibonacci_index] != -1 &&
+      fibonacci_index < MAX_MEMO_SIZE) {
+    return memoization_array_recursive[fibonacci_index];
+  }
+
+  memoization_array_recursive[fibonacci_index] =
+      compute_fibonacci_recursive(fibonacci_index - 1) +
+      compute_fibonacci_recursive(fibonacci_index - 2);
+
+  return memoization_array_recursive[fibonacci_index];
 }
-
-long long fib_wrapper_i(int index) { return fib_i(index); }
-
-long long fib_wrapper_r(int index) { return fib_r(index); }
